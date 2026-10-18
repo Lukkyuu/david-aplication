@@ -19,6 +19,10 @@ import cl.duoc.prestaaula.domain.repository.BloqueHorarioRepository
 import cl.duoc.prestaaula.domain.repository.EquipoRepository
 import cl.duoc.prestaaula.domain.repository.PrestamoRepository
 import cl.duoc.prestaaula.domain.repository.ReservaRepository
+import cl.duoc.prestaaula.domain.usecase.RegistrarDevolucionUseCase
+import cl.duoc.prestaaula.domain.usecase.RegistrarPrestamoUseCase
+import cl.duoc.prestaaula.domain.usecase.ReservarEquipoUseCase
+import cl.duoc.prestaaula.domain.usecase.VencerReservasUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -37,6 +41,11 @@ interface AppContainer {
     val reservaRepository: ReservaRepository
     val prestamoRepository: PrestamoRepository
     val bloqueHorarioRepository: BloqueHorarioRepository
+
+    val reservarEquipoUseCase: ReservarEquipoUseCase
+    val registrarPrestamoUseCase: RegistrarPrestamoUseCase
+    val registrarDevolucionUseCase: RegistrarDevolucionUseCase
+    val vencerReservasUseCase: VencerReservasUseCase
 }
 
 class DefaultAppContainer(private val context: Context) : AppContainer {
@@ -103,5 +112,21 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
             bloqueHorarioDao = database.bloqueHorarioDao(),
             disponibilidadDocenteDao = database.disponibilidadDocenteDao()
         )
+    }
+
+    override val reservarEquipoUseCase: ReservarEquipoUseCase by lazy {
+        ReservarEquipoUseCase(reservaRepository, equipoRepository)
+    }
+
+    override val registrarPrestamoUseCase: RegistrarPrestamoUseCase by lazy {
+        RegistrarPrestamoUseCase(prestamoRepository)
+    }
+
+    override val registrarDevolucionUseCase: RegistrarDevolucionUseCase by lazy {
+        RegistrarDevolucionUseCase(prestamoRepository)
+    }
+
+    override val vencerReservasUseCase: VencerReservasUseCase by lazy {
+        VencerReservasUseCase(reservaRepository)
     }
 }
