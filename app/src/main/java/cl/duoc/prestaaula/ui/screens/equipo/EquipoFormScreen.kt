@@ -10,8 +10,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Comment
 import androidx.compose.material.icons.filled.Category
-import androidx.compose.material.icons.filled.Comment
 import androidx.compose.material.icons.filled.Devices
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material3.Button
@@ -111,7 +111,7 @@ fun EquipoFormScreen(
                 value = observaciones,
                 onValueChange = { observaciones = it },
                 label = "Observaciones iniciales",
-                leadingIcon = Icons.Default.Comment,
+                leadingIcon = Icons.AutoMirrored.Filled.Comment,
                 singleLine = false,
                 maxLines = 3
             )

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -75,7 +76,7 @@ fun DocenteHomeScreen(
                     Column(modifier = Modifier.padding(16.dp)) {
                         Row {
                             Icon(Icons.Default.Bookmark, contentDescription = "Mis reservas hoy")
-                            Spacer(modifier = Modifier.size(8.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = "Mis Reservas de Hoy",
                                 style = MaterialTheme.typography.titleMedium,
@@ -99,7 +100,7 @@ fun DocenteHomeScreen(
                     Column(modifier = Modifier.padding(16.dp)) {
                         Row {
                             Icon(Icons.Default.Devices, contentDescription = "Equipos a cargo")
-                            Spacer(modifier = Modifier.size(8.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = "Equipos Actualmente a mi Cargo",
                                 style = MaterialTheme.typography.titleMedium,

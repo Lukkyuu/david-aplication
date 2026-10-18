@@ -10,9 +10,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Comment
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Class
-import androidx.compose.material.icons.filled.Comment
 import androidx.compose.material.icons.filled.Devices
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Button
@@ -110,7 +110,7 @@ fun ReservaFormScreen(
                 value = observacion,
                 onValueChange = { observacion = it },
                 label = "Observaciones (opcional)",
-                leadingIcon = Icons.Default.Comment,
+                leadingIcon = Icons.AutoMirrored.Filled.Comment,
                 singleLine = false,
                 maxLines = 3
             )
