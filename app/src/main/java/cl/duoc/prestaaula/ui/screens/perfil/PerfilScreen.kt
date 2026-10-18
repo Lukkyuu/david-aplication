@@ -22,10 +22,17 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import cl.duoc.prestaaula.PrestaAulaApplication
 import cl.duoc.prestaaula.domain.model.RolUsuario
+import cl.duoc.prestaaula.ui.viewmodel.AppViewModelFactory
+import cl.duoc.prestaaula.ui.viewmodel.PerfilViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,6 +40,16 @@ fun PerfilScreen(
     currentRole: RolUsuario?,
     onLogout: () -> Unit
 ) {
+    val context = LocalContext.current
+    val app = context.applicationContext as PrestaAulaApplication
+    val viewModel: PerfilViewModel = viewModel(factory = AppViewModelFactory(app.container))
+    val session by viewModel.currentSession.collectAsState()
+
+    val nombreCompleto = if (session.nombre.isNotBlank()) "${session.nombre} ${session.apellido}" else "Usuario Conectado"
+    val emailText = session.email.ifBlank { "Sin correo registrado" }
+    val rutText = session.rut.ifBlank { "N/A" }
+    val rolText = session.rol?.displayName ?: currentRole?.displayName ?: "Sin Rol"
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -56,16 +73,16 @@ fun PerfilScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "Usuario Conectado",
+                text = nombreCompleto,
                 style = MaterialTheme.typography.titleLarge
             )
             Text(
-                text = "Rol activo: ${currentRole?.displayName ?: "No autenticado"}",
+                text = emailText,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -73,20 +90,23 @@ fun PerfilScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "Información del Colegio",
+                        text = "Datos de Cuenta",
                         style = MaterialTheme.typography.titleMedium
                     )
                     Spacer(modifier = Modifier.height(8.dp))
+                    Text(text = "RUT: $rutText")
+                    Text(text = "Rol Activo: $rolText")
                     Text(text = "Institución: Colegio Marcela Paz")
                     Text(text = "Sede: CRA Central y Sala Tecnológica")
-                    Text(text = "Asignatura: DSY1105 Duoc UC")
                 }
             }
 
             Spacer(modifier = Modifier.weight(1f))
 
             OutlinedButton(
-                onClick = onLogout,
+                onClick = {
+                    viewModel.logout(onLogout)
+                },
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
                 modifier = Modifier.fillMaxWidth()
             ) {

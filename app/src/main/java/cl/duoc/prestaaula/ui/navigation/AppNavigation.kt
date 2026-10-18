@@ -110,7 +110,18 @@ fun PrestaAulaAppNavigation() {
             // Splash
             composable(Screen.Splash.route) {
                 SplashScreen(
-                    onTimeout = {
+                    onNavigateToHome = { role ->
+                        currentRole = role
+                        val destination = when (role) {
+                            RolUsuario.DOCENTE -> Screen.DocenteHome.route
+                            RolUsuario.ENCARGADO_CRA -> Screen.CraDashboard.route
+                            RolUsuario.UTP, RolUsuario.ADMIN_FINANZAS -> Screen.Reportes.route
+                        }
+                        navController.navigate(destination) {
+                            popUpTo(Screen.Splash.route) { inclusive = true }
+                        }
+                    },
+                    onNavigateToLogin = {
                         navController.navigate(Screen.Login.route) {
                             popUpTo(Screen.Splash.route) { inclusive = true }
                         }

@@ -17,23 +17,39 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import cl.duoc.prestaaula.PrestaAulaApplication
+import cl.duoc.prestaaula.domain.model.RolUsuario
+import cl.duoc.prestaaula.ui.viewmodel.AppViewModelFactory
+import cl.duoc.prestaaula.ui.viewmodel.SplashState
+import cl.duoc.prestaaula.ui.viewmodel.SplashViewModel
 import kotlinx.coroutines.delay
 
 @Composable
 fun SplashScreen(
-    onTimeout: () -> Unit
+    onNavigateToHome: (RolUsuario) -> Unit,
+    onNavigateToLogin: () -> Unit
 ) {
+    val context = LocalContext.current
+    val app = context.applicationContext as PrestaAulaApplication
+    val viewModel: SplashViewModel = viewModel(factory = AppViewModelFactory(app.container))
+    val splashState by viewModel.splashState.collectAsState()
+
     val scale = remember { Animatable(0.6f) }
 
     LaunchedEffect(Unit) {
+        viewModel.checkSession()
         scale.animateTo(
             targetValue = 1.0f,
             animationSpec = tween(
@@ -41,8 +57,22 @@ fun SplashScreen(
                 easing = FastOutSlowInEasing
             )
         )
-        delay(600)
-        onTimeout()
+    }
+
+    LaunchedEffect(splashState) {
+        when (val state = splashState) {
+            is SplashState.Authenticated -> {
+                delay(400)
+                state.session.rol?.let { role ->
+                    onNavigateToHome(role)
+                } ?: onNavigateToLogin()
+            }
+            is SplashState.Unauthenticated -> {
+                delay(400)
+                onNavigateToLogin()
+            }
+            is SplashState.Loading -> { }
+        }
     }
 
     Box(
