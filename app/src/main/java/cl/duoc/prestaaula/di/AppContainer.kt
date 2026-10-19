@@ -55,9 +55,14 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
             context,
             PrestaAulaDatabase::class.java,
             "prestaaula.db"
-        )
-        .fallbackToDestructiveMigration()
-        .build().also { dbInstance ->
+        ).addCallback(object : RoomDatabase.Callback() {
+            override fun onCreate(db: SupportSQLiteDatabase) {
+                super.onCreate(db)
+                CoroutineScope(Dispatchers.IO).launch {
+                    DatabaseSeeder.seedDatabaseIfEmpty(database)
+                }
+            }
+        }).build().also { dbInstance ->
             CoroutineScope(Dispatchers.IO).launch {
                 DatabaseSeeder.seedDatabaseIfEmpty(dbInstance)
             }
@@ -89,7 +94,8 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
         ReservaRepositoryImpl(
             reservaDao = database.reservaDao(),
             equipoDao = database.equipoDao(),
-            transactionRunner = transactionRunner
+            transactionRunner = transactionRunner,
+            context = context
         )
     }
 

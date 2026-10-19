@@ -86,6 +86,7 @@ class RepositoryRulesTest {
         override fun getReservasPorDocente(docenteId: Long) = flowOf(emptyList<cl.duoc.prestaaula.data.local.relation.ReservaConDetalle>())
         override fun getReservasActivasPorDocente(docenteId: Long) = flowOf(emptyList<cl.duoc.prestaaula.data.local.relation.ReservaConDetalle>())
         override fun getReservasHoyPorDocente(docenteId: Long, fechaHoy: String) = flowOf(emptyList<cl.duoc.prestaaula.data.local.relation.ReservaConDetalle>())
+        override fun getReservasActivasHoy(fechaHoy: String) = flowOf(emptyList<cl.duoc.prestaaula.data.local.relation.ReservaConDetalle>())
         override suspend fun getReservaConflicto(equipoId: Long, fecha: String, bloqueId: Long): ReservaEntity? {
             return reservasMemoria.find {
                 it.equipoId == equipoId && it.fecha == fecha && it.bloqueId == bloqueId &&

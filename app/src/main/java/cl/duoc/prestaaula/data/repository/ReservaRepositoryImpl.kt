@@ -1,19 +1,26 @@
 package cl.duoc.prestaaula.data.repository
 
+import android.content.Context
+import androidx.work.Data
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import cl.duoc.prestaaula.data.local.dao.EquipoDao
 import cl.duoc.prestaaula.data.local.dao.ReservaDao
 import cl.duoc.prestaaula.data.local.entity.ReservaEntity
 import cl.duoc.prestaaula.data.local.relation.ReservaConDetalle
 import cl.duoc.prestaaula.data.local.transaction.TransactionRunner
+import cl.duoc.prestaaula.data.worker.ReminderWorker
 import cl.duoc.prestaaula.domain.model.EstadoEquipo
 import cl.duoc.prestaaula.domain.model.EstadoReserva
 import cl.duoc.prestaaula.domain.repository.ReservaRepository
 import kotlinx.coroutines.flow.Flow
+import java.util.concurrent.TimeUnit
 
 class ReservaRepositoryImpl(
     private val reservaDao: ReservaDao,
     private val equipoDao: EquipoDao,
-    private val transactionRunner: TransactionRunner
+    private val transactionRunner: TransactionRunner,
+    private val context: Context? = null
 ) : ReservaRepository {
 
     override suspend fun crearReserva(reserva: ReservaEntity): Result<Long> {
@@ -38,6 +45,23 @@ class ReservaRepositoryImpl(
 
         return try {
             val id = reservaDao.insert(reserva)
+            context?.let { ctx ->
+                try {
+                    val data = Data.Builder()
+                        .putString("titulo", "Recordatorio Reserva CRA")
+                        .putString("mensaje", "Tiene una reserva activa para el curso ${reserva.curso} el ${reserva.fecha}.")
+                        .build()
+
+                    val workRequest = OneTimeWorkRequestBuilder<ReminderWorker>()
+                        .setInitialDelay(10, TimeUnit.MINUTES)
+                        .setInputData(data)
+                        .build()
+
+                    WorkManager.getInstance(ctx).enqueue(workRequest)
+                } catch (e: Exception) {
+                    // Ignorar en entornos de test unitario puro
+                }
+            }
             Result.success(id)
         } catch (e: Exception) {
             Result.failure(e)
