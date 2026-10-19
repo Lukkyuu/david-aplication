@@ -113,7 +113,7 @@ class DevolucionViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
             val session = authRepository.currentSession.first()
-            val encargadoId = session.userId ?: 1L
+            val encargadoId = if (session.userId > 0L) session.userId else 1L
 
             registrarDevolucionUseCase(
                 prestamoId = prestamo.prestamo.id,

@@ -110,7 +110,7 @@ class ReservaFormViewModel(
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
             val session = authRepository.currentSession.first()
             val docenteId = session.userId ?: 1L
-            val targetEquipoId = state.equipoId.takeIf { it > 0L } ?: state.equipo?.id ?: 1L
+            val targetEquipoId = if (state.equipoId > 0L) state.equipoId else (state.equipo?.id ?: 1L)
 
             reservarEquipoUseCase(
                 equipoId = targetEquipoId,

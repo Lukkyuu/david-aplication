@@ -52,6 +52,9 @@ class AppViewModelFactory(
             modelClass.isAssignableFrom(DevolucionViewModel::class.java) -> {
                 DevolucionViewModel(extraArgString, container.prestamoRepository, container.equipoRepository, container.authRepository, container.registrarDevolucionUseCase) as T
             }
+            modelClass.isAssignableFrom(CraDashboardViewModel::class.java) -> {
+                CraDashboardViewModel(container.equipoRepository, container.prestamoRepository) as T
+            }
             else -> throw IllegalArgumentException("ViewModel no registrado en AppViewModelFactory: ${modelClass.name}")
         }
     }
