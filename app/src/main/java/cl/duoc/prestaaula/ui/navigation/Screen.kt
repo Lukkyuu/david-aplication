@@ -34,6 +34,9 @@ sealed class Screen(val route: String) {
     object Devolucion : Screen("devolucion?codigo={codigo}") {
         fun createRoute(codigo: String? = null) = if (!codigo.isNullOrBlank()) "devolucion?codigo=$codigo" else "devolucion"
     }
+    object QrScanner : Screen("qr_scanner/{modo}") {
+        fun createRoute(modo: String) = "qr_scanner/$modo"
+    }
 
     // UTP / Finanzas / CRA
     object Reportes : Screen("reportes")

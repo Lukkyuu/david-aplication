@@ -1,6 +1,5 @@
 package cl.duoc.prestaaula.ui.screens.cra
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,7 +18,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Comment
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Class
-import androidx.compose.material.icons.filled.Devices
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material3.Button
@@ -30,7 +28,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -55,7 +52,8 @@ import cl.duoc.prestaaula.ui.viewmodel.PrestamoViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PrestamoScreen(
-    codigoInicial: String? = null
+    codigoInicial: String? = null,
+    onNavigateToQrScanner: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
     val app = context.applicationContext as PrestaAulaApplication
@@ -106,7 +104,17 @@ fun PrestamoScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            // Sección: Entregas pendientes de hoy si existen reservas activas
+            if (onNavigateToQrScanner != null) {
+                Button(
+                    onClick = onNavigateToQrScanner,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.QrCode, contentDescription = "Escanear QR")
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Escanear Código QR con Cámara")
+                }
+            }
+
             if (uiState.reservasHoy.isNotEmpty()) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -157,7 +165,6 @@ fun PrestamoScreen(
                 }
             }
 
-            // 1. Código o Selección de Equipo
             ValidatedTextField(
                 value = uiState.codigoEquipo,
                 onValueChange = viewModel::onCodigoChanged,
@@ -182,7 +189,6 @@ fun PrestamoScreen(
                 }
             }
 
-            // 2. Docente Responsable
             ValidatedTextField(
                 value = uiState.docenteRut,
                 onValueChange = viewModel::onDocenteRutChanged,
@@ -191,23 +197,6 @@ fun PrestamoScreen(
                 leadingIcon = Icons.Default.Person
             )
 
-            if (uiState.docentes.isNotEmpty()) {
-                Text(text = "O seleccione el docente registrado:", style = MaterialTheme.typography.labelSmall)
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    items(uiState.docentes) { doc ->
-                        FilterChip(
-                            selected = uiState.docenteSeleccionado?.id == doc.id,
-                            onClick = { viewModel.onDocenteSelected(doc) },
-                            label = { Text("${doc.nombre} ${doc.apellido}") },
-                            leadingIcon = if (uiState.docenteSeleccionado?.id == doc.id) {
-                                { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
-                            } else null
-                        )
-                    }
-                }
-            }
-
-            // 3. Curso / Asignatura
             ValidatedTextField(
                 value = uiState.curso,
                 onValueChange = viewModel::onCursoChanged,
@@ -218,7 +207,6 @@ fun PrestamoScreen(
                 isValid = uiState.curso.isNotBlank()
             )
 
-            // 4. Observaciones
             ValidatedTextField(
                 value = uiState.observaciones,
                 onValueChange = viewModel::onObservacionesChanged,

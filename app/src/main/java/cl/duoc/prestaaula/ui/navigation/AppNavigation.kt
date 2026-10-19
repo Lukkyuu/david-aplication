@@ -39,6 +39,7 @@ import cl.duoc.prestaaula.ui.screens.equipo.EquipoDetalleScreen
 import cl.duoc.prestaaula.ui.screens.equipo.EquipoFormScreen
 import cl.duoc.prestaaula.ui.screens.equipo.EquipoQrScreen
 import cl.duoc.prestaaula.ui.screens.perfil.PerfilScreen
+import cl.duoc.prestaaula.ui.screens.qr.QrScannerScreen
 import cl.duoc.prestaaula.ui.screens.reportes.ReportesScreen
 import cl.duoc.prestaaula.ui.screens.splash.SplashScreen
 
@@ -275,7 +276,10 @@ fun PrestaAulaAppNavigation() {
                 })
             ) { backStackEntry ->
                 val codigo = backStackEntry.arguments?.getString("codigo")
-                PrestamoScreen(codigoInicial = codigo)
+                PrestamoScreen(
+                    codigoInicial = codigo,
+                    onNavigateToQrScanner = { navController.navigate(Screen.QrScanner.createRoute("PRESTAMO")) }
+                )
             }
 
             composable(
@@ -287,7 +291,32 @@ fun PrestaAulaAppNavigation() {
                 })
             ) { backStackEntry ->
                 val codigo = backStackEntry.arguments?.getString("codigo")
-                DevolucionScreen(codigoInicial = codigo)
+                DevolucionScreen(
+                    codigoInicial = codigo,
+                    onNavigateToQrScanner = { navController.navigate(Screen.QrScanner.createRoute("DEVOLUCION")) }
+                )
+            }
+
+            composable(
+                route = Screen.QrScanner.route,
+                arguments = listOf(navArgument("modo") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val modo = backStackEntry.arguments?.getString("modo") ?: "PRESTAMO"
+                QrScannerScreen(
+                    modo = modo,
+                    onScanResult = { scannedCode ->
+                        if (modo.equals("DEVOLUCION", ignoreCase = true)) {
+                            navController.navigate(Screen.Devolucion.createRoute(scannedCode)) {
+                                popUpTo(Screen.QrScanner.route) { inclusive = true }
+                            }
+                        } else {
+                            navController.navigate(Screen.Prestamo.createRoute(scannedCode)) {
+                                popUpTo(Screen.QrScanner.route) { inclusive = true }
+                            }
+                        }
+                    },
+                    onNavigateBack = { navController.popBackStack() }
+                )
             }
 
             // Reportes
