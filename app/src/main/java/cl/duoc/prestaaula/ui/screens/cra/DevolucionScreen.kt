@@ -1,6 +1,5 @@
 package cl.duoc.prestaaula.ui.screens.cra
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -18,7 +17,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Comment
-import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.filled.Warning
@@ -30,7 +28,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -49,15 +46,16 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cl.duoc.prestaaula.PrestaAulaApplication
 import cl.duoc.prestaaula.domain.model.EstadoDevolucion
+import cl.duoc.prestaaula.ui.components.CameraCaptureButton
 import cl.duoc.prestaaula.ui.components.ValidatedTextField
-import cl.duoc.prestaaula.ui.theme.StatusMantencion
 import cl.duoc.prestaaula.ui.viewmodel.AppViewModelFactory
 import cl.duoc.prestaaula.ui.viewmodel.DevolucionViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DevolucionScreen(
-    codigoInicial: String? = null
+    codigoInicial: String? = null,
+    onNavigateToQrScanner: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
     val app = context.applicationContext as PrestaAulaApplication
@@ -108,7 +106,17 @@ fun DevolucionScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            // Préstamos Activos (para selección rápida)
+            if (onNavigateToQrScanner != null) {
+                Button(
+                    onClick = onNavigateToQrScanner,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.QrCode, contentDescription = "Escanear QR")
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Escanear QR con Cámara")
+                }
+            }
+
             if (uiState.prestamosActivos.isNotEmpty()) {
                 Text(
                     text = "Préstamos actualmente en curso (${uiState.prestamosActivos.size}):",
@@ -220,23 +228,15 @@ fun DevolucionScreen(
                 maxLines = 3
             )
 
-            // Fotografía de evidencia
+            // Fotografía de evidencia con CameraCaptureButton
             if (uiState.estadoDevolucion == EstadoDevolucion.DANADO || uiState.estadoDevolucion == EstadoDevolucion.INCOMPLETO) {
                 Column {
-                    OutlinedButton(
-                        onClick = {
-                            val simulatedUri = "file:///storage/emulated/0/PrestaAula/evidencia_${System.currentTimeMillis()}.jpg"
-                            viewModel.onFotoCaptured(simulatedUri)
+                    CameraCaptureButton(
+                        onPhotoCaptured = { uri ->
+                            viewModel.onFotoCaptured(uri.toString())
                         },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(Icons.Default.CameraAlt, contentDescription = "Tomar foto")
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            if (uiState.fotoUri != null) "✓ Fotografía de evidencia adjuntada"
-                            else "Tomar Fotografía de Evidencia (Obligatorio)"
-                        )
-                    }
+                        buttonText = if (uiState.fotoUri != null) "✓ Fotografía de evidencia adjuntada" else "Tomar Fotografía con Cámara (Obligatorio)"
+                    )
 
                     if (uiState.fotoError != null) {
                         Text(

@@ -5,15 +5,13 @@ import androidx.lifecycle.viewModelScope
 import cl.duoc.prestaaula.data.local.relation.PrestamoConDetalle
 import cl.duoc.prestaaula.domain.model.EstadoDevolucion
 import cl.duoc.prestaaula.domain.repository.AuthRepository
+import cl.duoc.prestaaula.domain.repository.EquipoRepository
 import cl.duoc.prestaaula.domain.repository.PrestamoRepository
 import cl.duoc.prestaaula.domain.usecase.RegistrarDevolucionUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -28,154 +26,117 @@ data class DevolucionUiState(
     val fotoError: String? = null,
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
-    val isSuccess: Boolean = false,
     val successMessage: String? = null
 )
 
 class DevolucionViewModel(
-    codigoInicial: String?,
+    private val codigoInicial: String?,
     private val prestamoRepository: PrestamoRepository,
+    private val equipoRepository: EquipoRepository,
     private val authRepository: AuthRepository,
     private val registrarDevolucionUseCase: RegistrarDevolucionUseCase
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(
-        DevolucionUiState(codigoInput = codigoInicial ?: "")
-    )
+    private val _uiState = MutableStateFlow(DevolucionUiState(codigoInput = codigoInicial.orEmpty()))
     val uiState: StateFlow<DevolucionUiState> = _uiState.asStateFlow()
 
     init {
-        cargarPrestamosActivos(codigoInicial)
+        loadPrestamosActivos()
     }
 
-    private fun cargarPrestamosActivos(codigoInicial: String?) {
-        prestamoRepository.getPrestamosActivos()
-            .onEach { lista ->
-                _uiState.update { current ->
-                    val seleccionado = current.prestamoSeleccionado ?: lista.find {
-                        it.equipo.codigoInterno.equals(codigoInicial ?: current.codigoInput, ignoreCase = true)
-                    }
-                    current.copy(
-                        prestamosActivos = lista,
-                        prestamoSeleccionado = seleccionado
-                    )
-                }
+    private fun loadPrestamosActivos() {
+        viewModelScope.launch {
+            val lista = prestamoRepository.getPrestamosActivos().first()
+            _uiState.update { state ->
+                val seleccionado = if (!codigoInicial.isNullOrBlank()) {
+                    lista.firstOrNull { it.equipo.codigoInterno.equals(codigoInicial, ignoreCase = true) }
+                } else null
+                state.copy(
+                    prestamosActivos = lista,
+                    prestamoSeleccionado = seleccionado ?: state.prestamoSeleccionado
+                )
             }
-            .catch { }
-            .launchIn(viewModelScope)
-    }
-
-    fun seleccionarPrestamo(prestamo: PrestamoConDetalle) {
-        _uiState.update {
-            it.copy(
-                prestamoSeleccionado = prestamo,
-                codigoInput = prestamo.equipo.codigoInterno,
-                errorMessage = null
-            )
         }
     }
 
+    fun seleccionarPrestamo(p: PrestamoConDetalle) {
+        _uiState.update { it.copy(prestamoSeleccionado = p, codigoInput = p.equipo.codigoInterno) }
+    }
+
     fun onCodigoChanged(codigo: String) {
-        _uiState.update { current ->
-            val match = current.prestamosActivos.find {
-                it.equipo.codigoInterno.equals(codigo.trim(), ignoreCase = true)
-            }
-            current.copy(
+        _uiState.update { state ->
+            val match = state.prestamosActivos.firstOrNull { it.equipo.codigoInterno.equals(codigo.trim(), ignoreCase = true) }
+            state.copy(
                 codigoInput = codigo,
-                prestamoSeleccionado = match,
-                errorMessage = null
+                prestamoSeleccionado = match ?: state.prestamoSeleccionado
             )
         }
     }
 
     fun onEstadoChanged(estado: EstadoDevolucion) {
-        _uiState.update {
-            it.copy(
-                estadoDevolucion = estado,
-                observacionesError = null,
-                fotoError = null,
-                errorMessage = null
-            )
-        }
+        _uiState.update { it.copy(estadoDevolucion = estado, fotoError = null, observacionesError = null) }
     }
 
     fun onObservacionesChanged(obs: String) {
-        _uiState.update {
-            it.copy(
-                observaciones = obs,
-                observacionesError = null,
-                errorMessage = null
-            )
-        }
+        _uiState.update { it.copy(observaciones = obs, observacionesError = null) }
     }
 
-    fun onFotoCaptured(uri: String) {
-        _uiState.update {
-            it.copy(
-                fotoUri = uri,
-                fotoError = null,
-                errorMessage = null
-            )
-        }
+    fun onFotoCaptured(uriStr: String) {
+        _uiState.update { it.copy(fotoUri = uriStr, fotoError = null) }
     }
 
     fun confirmarDevolucion() {
         val state = _uiState.value
         val prestamo = state.prestamoSeleccionado
-
         if (prestamo == null) {
-            _uiState.update { it.copy(errorMessage = "Debe seleccionar el equipo o préstamo activo a recepcionar.") }
+            _uiState.update { it.copy(errorMessage = "Seleccione un préstamo activo o ingrese el código del equipo") }
             return
         }
 
-        val obs = state.observaciones.trim()
-        val necesitaObs = state.estadoDevolucion != EstadoDevolucion.BUENO
-        if (necesitaObs && obs.isBlank()) {
-            _uiState.update { it.copy(observacionesError = "Debe ingresar observaciones detalladas sobre el estado del equipo.") }
-            return
-        }
+        val requiereObs = state.estadoDevolucion == EstadoDevolucion.DANADO ||
+                state.estadoDevolucion == EstadoDevolucion.INCOMPLETO ||
+                state.estadoDevolucion == EstadoDevolucion.CON_OBSERVACIONES
 
-        if (state.estadoDevolucion == EstadoDevolucion.DANADO && state.fotoUri.isNullOrBlank()) {
-            _uiState.update { it.copy(fotoError = "Es obligatorio adjuntar una fotografía de evidencia por equipo dañado.") }
+        val obsError = if (requiereObs && state.observaciones.trim().isBlank()) {
+            "Las observaciones son obligatorias para este estado"
+        } else null
+
+        val fotoError = if (state.estadoDevolucion == EstadoDevolucion.DANADO && state.fotoUri.isNullOrBlank()) {
+            "Debe adjuntar una fotografía de evidencia del daño"
+        } else null
+
+        if (obsError != null || fotoError != null) {
+            _uiState.update { it.copy(observacionesError = obsError, fotoError = fotoError) }
             return
         }
 
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            val session = authRepository.currentSession.first()
+            val encargadoId = session.userId ?: 1L
 
-            val session = authRepository.currentSession.firstOrNull()
-            val encargadoId = session?.userId
-
-            val result = registrarDevolucionUseCase(
+            registrarDevolucionUseCase(
                 prestamoId = prestamo.prestamo.id,
                 estadoAlDevolver = state.estadoDevolucion,
-                observaciones = obs,
+                observaciones = state.observaciones,
                 rutaFotoEvidencia = state.fotoUri,
                 encargadoRecibioId = encargadoId
-            )
-
-            result.onSuccess {
-                val mensajeEstado = when (state.estadoDevolucion) {
-                    EstadoDevolucion.BUENO -> "Equipo devuelto en buen estado y disponible en inventario."
-                    EstadoDevolucion.CON_OBSERVACIONES -> "Equipo devuelto con observaciones registradas."
-                    EstadoDevolucion.DANADO -> "Equipo devuelto DAÑADO. Pasó automáticamente a EN MANTENCIÓN con evidencia fotográfica."
-                    EstadoDevolucion.INCOMPLETO -> "Equipo devuelto INCOMPLETO. Pasó a EN MANTENCIÓN."
-                }
+            ).onSuccess {
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        isSuccess = true,
-                        successMessage = "¡Devolución de ${prestamo.equipo.codigoInterno} registrada con éxito! $mensajeEstado",
+                        successMessage = "¡Devolución registrada con éxito! Inventario actualizado.",
                         prestamoSeleccionado = null,
                         observaciones = "",
                         fotoUri = null
                     )
                 }
-            }.onFailure { ex ->
+                loadPrestamosActivos()
+            }.onFailure { exc ->
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        errorMessage = ex.message ?: "Error al registrar devolución"
+                        errorMessage = exc.message ?: "Error al registrar devolución"
                     )
                 }
             }
