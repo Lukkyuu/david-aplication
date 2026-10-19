@@ -81,4 +81,12 @@ class AuthRepositoryImpl(
     override fun getUsuarioById(id: Long): Flow<UsuarioEntity?> {
         return usuarioDao.getByIdFlow(id)
     }
+
+    override fun getDocentes(): Flow<List<UsuarioEntity>> {
+        return usuarioDao.getUsuariosPorRol(cl.duoc.prestaaula.domain.model.RolUsuario.DOCENTE)
+    }
+
+    override suspend fun getUsuarioByRut(rut: String): UsuarioEntity? {
+        return usuarioDao.getByRut(rut.trim())
+    }
 }

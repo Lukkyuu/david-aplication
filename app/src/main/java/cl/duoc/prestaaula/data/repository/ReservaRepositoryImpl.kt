@@ -72,6 +72,10 @@ class ReservaRepositoryImpl(
         return reservaDao.getReservasHoyPorDocente(docenteId, fechaHoy)
     }
 
+    override fun getReservasActivasHoy(fechaHoy: String): Flow<List<ReservaConDetalle>> {
+        return reservaDao.getReservasActivasHoy(fechaHoy)
+    }
+
     override suspend fun verificarConflictoReserva(equipoId: Long, fecha: String, bloqueId: Long): Boolean {
         return reservaDao.getReservaConflicto(equipoId, fecha, bloqueId) != null
     }

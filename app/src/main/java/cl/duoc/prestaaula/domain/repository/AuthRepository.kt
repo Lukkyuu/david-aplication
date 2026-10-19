@@ -10,4 +10,6 @@ interface AuthRepository {
     suspend fun register(usuario: UsuarioEntity, rawPassword: String): Result<Long>
     suspend fun logout()
     fun getUsuarioById(id: Long): Flow<UsuarioEntity?>
+    fun getDocentes(): Flow<List<UsuarioEntity>>
+    suspend fun getUsuarioByRut(rut: String): UsuarioEntity?
 }

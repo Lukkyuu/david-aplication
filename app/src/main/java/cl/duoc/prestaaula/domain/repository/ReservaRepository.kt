@@ -10,6 +10,7 @@ interface ReservaRepository {
     fun getReservasPorDocente(docenteId: Long): Flow<List<ReservaConDetalle>>
     fun getReservasActivasPorDocente(docenteId: Long): Flow<List<ReservaConDetalle>>
     fun getReservasHoyPorDocente(docenteId: Long, fechaHoy: String): Flow<List<ReservaConDetalle>>
+    fun getReservasActivasHoy(fechaHoy: String): Flow<List<ReservaConDetalle>>
     suspend fun verificarConflictoReserva(equipoId: Long, fecha: String, bloqueId: Long): Boolean
     suspend fun countReservasActivasDocenteEnBloque(docenteId: Long, fecha: String, bloqueId: Long): Int
     suspend fun revisarYVencerReservas(fechaHoy: String, horaActual: String): Int

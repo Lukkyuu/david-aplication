@@ -55,14 +55,9 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
             context,
             PrestaAulaDatabase::class.java,
             "prestaaula.db"
-        ).addCallback(object : RoomDatabase.Callback() {
-            override fun onCreate(db: SupportSQLiteDatabase) {
-                super.onCreate(db)
-                CoroutineScope(Dispatchers.IO).launch {
-                    DatabaseSeeder.seedDatabaseIfEmpty(database)
-                }
-            }
-        }).build().also { dbInstance ->
+        )
+        .fallbackToDestructiveMigration()
+        .build().also { dbInstance ->
             CoroutineScope(Dispatchers.IO).launch {
                 DatabaseSeeder.seedDatabaseIfEmpty(dbInstance)
             }

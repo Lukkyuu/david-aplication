@@ -46,6 +46,42 @@ class AppViewModelFactory(
                 val equipoIdLong = extraArgString?.toLongOrNull() ?: extraArgLong.takeIf { it > 0L }
                 EquipoFormViewModel(equipoIdLong, container.equipoRepository) as T
             }
+            modelClass.isAssignableFrom(PrestamoViewModel::class.java) -> {
+                PrestamoViewModel(
+                    codigoInicial = extraArgString,
+                    equipoRepository = container.equipoRepository,
+                    authRepository = container.authRepository,
+                    reservaRepository = container.reservaRepository,
+                    registrarPrestamoUseCase = container.registrarPrestamoUseCase
+                ) as T
+            }
+            modelClass.isAssignableFrom(DevolucionViewModel::class.java) -> {
+                DevolucionViewModel(
+                    codigoInicial = extraArgString,
+                    prestamoRepository = container.prestamoRepository,
+                    authRepository = container.authRepository,
+                    registrarDevolucionUseCase = container.registrarDevolucionUseCase
+                ) as T
+            }
+            modelClass.isAssignableFrom(CraDashboardViewModel::class.java) -> {
+                CraDashboardViewModel(
+                    equipoRepository = container.equipoRepository,
+                    prestamoRepository = container.prestamoRepository,
+                    reservaRepository = container.reservaRepository
+                ) as T
+            }
+            modelClass.isAssignableFrom(ReportesViewModel::class.java) -> {
+                ReportesViewModel(
+                    equipoRepository = container.equipoRepository,
+                    prestamoRepository = container.prestamoRepository
+                ) as T
+            }
+            modelClass.isAssignableFrom(HorarioDocenteViewModel::class.java) -> {
+                HorarioDocenteViewModel(
+                    authRepository = container.authRepository,
+                    bloqueHorarioRepository = container.bloqueHorarioRepository
+                ) as T
+            }
             else -> throw IllegalArgumentException("ViewModel no registrado en AppViewModelFactory: ${modelClass.name}")
         }
     }

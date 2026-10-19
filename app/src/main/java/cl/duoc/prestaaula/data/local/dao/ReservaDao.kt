@@ -51,6 +51,14 @@ interface ReservaDao {
     """)
     fun getReservasHoyPorDocente(docenteId: Long, fechaHoy: String): Flow<List<ReservaConDetalle>>
 
+    @Transaction
+    @Query("""
+        SELECT * FROM reservas 
+        WHERE fecha = :fechaHoy AND estado = 'ACTIVA'
+        ORDER BY bloqueId ASC
+    """)
+    fun getReservasActivasHoy(fechaHoy: String): Flow<List<ReservaConDetalle>>
+
     @Query("""
         SELECT * FROM reservas 
         WHERE equipoId = :equipoId 
